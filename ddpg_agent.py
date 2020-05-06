@@ -14,7 +14,7 @@ BATCH_SIZE = 128        # minibatch size
 GAMMA = 0.99            # discount factor
 TAU = 1e-3              # for soft update of target parameters
 LR_ACTOR = 1e-4         # learning rate of the actor 
-LR_CRITIC = 3e-4        # learning rate of the critic
+LR_CRITIC = 3e-4       # learning rate of the critic
 WEIGHT_DECAY = 0.0001   # L2 weight decay
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -34,7 +34,7 @@ class Agent():
         self.state_size = state_size
         self.action_size = action_size
         self.seed = random.seed(random_seed)
-        self.EPS = 1.0
+        self.eps = 0.4
         # Actor Network (w/ Target Network)
         self.actor_local = Actor(state_size, action_size, random_seed).to(device)
         self.actor_target = Actor(state_size, action_size, random_seed).to(device)
@@ -65,15 +65,16 @@ class Agent():
         """Returns actions for given state as per current policy."""
         state = torch.from_numpy(state).float().to(device)
         self.actor_local.eval()
-        if np.random.randint(0,1) <= self.EPS:
+        if np.random.randint(0,1) < self.eps:
             action = np.random.randn(1,4)
         else:
+        
             with torch.no_grad():
                 action = self.actor_local(state).cpu().data.numpy()
-            self.actor_local.train()
-            if add_noise:
-                action += self.noise.sample()
-        self.EPS *=0.95
+                self.actor_local.train()
+        if add_noise:
+            action +=  self.noise.sample()
+        self.eps *= 0.95
         return np.clip(action, -1, 1)
 
     def reset(self):
